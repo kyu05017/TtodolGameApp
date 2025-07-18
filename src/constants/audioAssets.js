@@ -4,9 +4,9 @@
  * ===================================================================
  */
 
-// 오디오 파일들
+// 오디오 파일들 - 임시로 null 사용 (오디오 파일이 없음)
 export const AUDIO_FILES = {
-  background: require('../assets/audio/background.mp3')
+  background: null
 };
 
 // 오디오 경로 생성 함수

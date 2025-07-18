@@ -4,39 +4,52 @@
  * ===================================================================
  */
 
+// 이미지 import
+import cherry from '../assets/images/fruits/00_cherry.png';
+import strawberry from '../assets/images/fruits/01_strawberry.png';
+import grape from '../assets/images/fruits/02_grape.png';
+import gyool from '../assets/images/fruits/03_gyool.png';
+import orange from '../assets/images/fruits/04_orange.png';
+import apple from '../assets/images/fruits/05_apple.png';
+import pear from '../assets/images/fruits/06_pear.png';
+import peach from '../assets/images/fruits/07_peach.png';
+import pineapple from '../assets/images/fruits/08_pineapple.png';
+import melon from '../assets/images/fruits/09_melon.png';
+import watermelon from '../assets/images/fruits/10_watermelon.png';
+
 // 과일 이미지들 (ID로 접근)
 export const FRUIT_IMAGES = {
-  0: require('../assets/images/fruits/00_cherry.png'),
-  1: require('../assets/images/fruits/01_strawberry.png'),
-  2: require('../assets/images/fruits/02_grape.png'),
-  3: require('../assets/images/fruits/03_gyool.png'),
-  4: require('../assets/images/fruits/04_orange.png'),
-  5: require('../assets/images/fruits/05_apple.png'),
-  6: require('../assets/images/fruits/06_pear.png'),
-  7: require('../assets/images/fruits/07_peach.png'),
-  8: require('../assets/images/fruits/08_pineapple.png'),
-  9: require('../assets/images/fruits/09_melon.png'),
-  10: require('../assets/images/fruits/10_watermelon.png')
+  0: cherry,
+  1: strawberry,
+  2: grape,
+  3: gyool,
+  4: orange,
+  5: apple,
+  6: pear,
+  7: peach,
+  8: pineapple,
+  9: melon,
+  10: watermelon
 };
 
 // 과일 이미지들 (이름으로 접근)
 export const FRUIT_IMAGES_BY_NAME = {
-  '00_cherry': require('../assets/images/fruits/00_cherry.png'),
-  '01_strawberry': require('../assets/images/fruits/01_strawberry.png'),
-  '02_grape': require('../assets/images/fruits/02_grape.png'),
-  '03_gyool': require('../assets/images/fruits/03_gyool.png'),
-  '04_orange': require('../assets/images/fruits/04_orange.png'),
-  '05_apple': require('../assets/images/fruits/05_apple.png'),
-  '06_pear': require('../assets/images/fruits/06_pear.png'),
-  '07_peach': require('../assets/images/fruits/07_peach.png'),
-  '08_pineapple': require('../assets/images/fruits/08_pineapple.png'),
-  '09_melon': require('../assets/images/fruits/09_melon.png'),
-  '10_watermelon': require('../assets/images/fruits/10_watermelon.png')
+  '00_cherry': cherry,
+  '01_strawberry': strawberry,
+  '02_grape': grape,
+  '03_gyool': gyool,
+  '04_orange': orange,
+  '05_apple': apple,
+  '06_pear': pear,
+  '07_peach': peach,
+  '08_pineapple': pineapple,
+  '09_melon': melon,
+  '10_watermelon': watermelon
 };
 
 // 배경 이미지들
 export const BACKGROUND_IMAGES = {
-  main_bg: require('../assets/images/backgrounds/main_bg.png')
+  main_bg: null
 };
 
 // 이미지 경로 생성 함수
@@ -57,8 +70,6 @@ export const getFruitImageUri = (fruitId) => {
   const imageSource = FRUIT_IMAGES[fruitId];
   if (!imageSource) return null;
   
-  // React Native의 Image.resolveAssetSource를 사용하여 URI 가져오기
-  const { Image } = require('react-native');
-  const resolvedSource = Image.resolveAssetSource(imageSource);
-  return resolvedSource ? resolvedSource.uri : null;
+  // 이미지 소스를 직접 반환 (Hermes 호환)
+  return imageSource;
 };

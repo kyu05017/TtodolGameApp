@@ -12,19 +12,17 @@ import {
 import { useGame } from '../services/GameContext';
 import { GAME_CONSTANTS } from '../constants/gameConstants';
 import { Platform } from 'react-native';
+import GameRenderer from '../components/Game/GameRenderer';
 
-// 플랫폼별 GameRenderer 로딩
-let GameRenderer, SimpleGameRenderer;
+// 플랫폼별 GameRenderer 로딩 - 동적 require 제거
+let SimpleGameRenderer;
 
 if (Platform.OS === 'web') {
-  try {
-    SimpleGameRenderer = require('../components/Game/SimpleGameRenderer.web.js').default;
-  } catch (e) {
-    console.log('SimpleGameRenderer 로드 실패, 기본 렌더러 사용');
-    GameRenderer = require('../components/Game/GameRenderer').default;
-  }
+  // 웹에서는 기본 GameRenderer 사용
+  SimpleGameRenderer = GameRenderer;
 } else {
-  GameRenderer = require('../components/Game/GameRenderer').default;
+  // 모바일에서도 기본 GameRenderer 사용
+  SimpleGameRenderer = GameRenderer;
 }
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');

@@ -33,15 +33,14 @@ module.exports = (env, argv) => {
     rules: [
       {
         test: /\.(js|jsx|ts|tsx)$/,
-        exclude: /node_modules/,
+        exclude: [
+          /node_modules/,
+          /node_modules\/react-native-linear-gradient/,
+        ],
         use: {
           loader: 'babel-loader',
           options: {
-            presets: [
-              '@babel/preset-env',
-              ['@babel/preset-react', { runtime: 'automatic' }],
-              '@babel/preset-typescript'
-            ],
+            configFile: path.resolve(__dirname, '.babelrc'),
           },
         },
       },
@@ -73,6 +72,10 @@ module.exports = (env, argv) => {
       'react-native-sound': path.resolve(__dirname, 'src/web/sound-mock.js'),
       'react-native-responsive-dimensions': path.resolve(__dirname, 'src/web/responsive-dimensions-mock.js'),
       'react-native-game-engine': path.resolve(__dirname, 'src/web/game-engine-mock.js'),
+      'react-native-linear-gradient': path.resolve(__dirname, 'src/web/linear-gradient-mock.js'),
+      'react-native-status-bar-height': path.resolve(__dirname, 'src/web/status-bar-height-mock.js'),
+      'react-native-safe-area-context': path.resolve(__dirname, 'src/web/safe-area-context-mock.js'),
+      './src/services/GameContext': path.resolve(__dirname, 'src/services/GameContext.web.js'),
     },
     fallback: {
       fs: false,
@@ -93,6 +96,18 @@ module.exports = (env, argv) => {
         }
       ]
     }),
+  ],
+  ignoreWarnings: [
+    {
+      module: /react-native-linear-gradient/,
+    },
+    {
+      module: /react-native-status-bar-height/,
+    },
+    {
+      module: /react-native-safe-area-context/,
+    },
+    /Module not found: Error: Can't resolve 'react-native-/,
   ],
   };
 };
