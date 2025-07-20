@@ -42,6 +42,12 @@ const initialState = {
   nickname: '',
   musicVolume: 0.3,
   effectVolume: 0.5,
+  settings: {
+    soundEnabled: true,
+    hapticEnabled: true,
+    musicVolume: 0.3,
+    effectVolume: 0.5,
+  },
   
   // 특수 기능
   shakeCountdown: 30,
@@ -194,12 +200,14 @@ const gameReducer = (state, action) => {
       };
       
     case ActionTypes.SET_MUSIC_VOLUME:
+      console.log('🔄 GameContext.web Reducer - SET_MUSIC_VOLUME:', action.payload.volume);
       return {
         ...state,
         musicVolume: action.payload.volume
       };
       
     case ActionTypes.SET_EFFECT_VOLUME:
+      console.log('🔄 GameContext.web Reducer - SET_EFFECT_VOLUME:', action.payload.volume);
       return {
         ...state,
         effectVolume: action.payload.volume
@@ -331,15 +339,21 @@ export const GameProvider = ({ children }) => {
       payload: { nickname }
     }),
     
-    setMusicVolume: (volume) => dispatch({
-      type: ActionTypes.SET_MUSIC_VOLUME,
-      payload: { volume }
-    }),
+    setMusicVolume: (volume) => {
+      console.log('🎵 GameContext.web - setMusicVolume 호출:', volume);
+      dispatch({
+        type: ActionTypes.SET_MUSIC_VOLUME,
+        payload: { volume }
+      });
+    },
     
-    setEffectVolume: (volume) => dispatch({
-      type: ActionTypes.SET_EFFECT_VOLUME,
-      payload: { volume }
-    }),
+    setEffectVolume: (volume) => {
+      console.log('🔊 GameContext.web - setEffectVolume 호출:', volume);
+      dispatch({
+        type: ActionTypes.SET_EFFECT_VOLUME,
+        payload: { volume }
+      });
+    },
     
     updateShakeCountdown: () => dispatch({ type: ActionTypes.UPDATE_SHAKE_COUNTDOWN }),
     
@@ -374,3 +388,6 @@ export const useGame = () => {
   }
   return context;
 };
+
+// Export the context for direct usage
+export { GameContext };

@@ -1,4 +1,5 @@
 const path = require('path');
+const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 
@@ -36,6 +37,8 @@ module.exports = (env, argv) => {
         exclude: [
           /node_modules/,
           /node_modules\/react-native-linear-gradient/,
+          /node_modules\/react-native-keep-awake/,
+          /node_modules\/react-native-haptic-feedback/,
         ],
         use: {
           loader: 'babel-loader',
@@ -75,7 +78,9 @@ module.exports = (env, argv) => {
       'react-native-linear-gradient': path.resolve(__dirname, 'src/web/linear-gradient-mock.js'),
       'react-native-status-bar-height': path.resolve(__dirname, 'src/web/status-bar-height-mock.js'),
       'react-native-safe-area-context': path.resolve(__dirname, 'src/web/safe-area-context-mock.js'),
-      './src/services/GameContext': path.resolve(__dirname, 'src/services/GameContext.web.js'),
+      'react-native-haptic-feedback$': path.resolve(__dirname, 'src/web/react-native-haptic-feedback-mock.js'),
+      'react-native-keep-awake$': path.resolve(__dirname, 'src/web/react-native-keep-awake-mock.js'),
+      'react-native-orientation-locker$': path.resolve(__dirname, 'src/web/react-native-orientation-locker-mock.js'),
     },
     fallback: {
       fs: false,
@@ -84,6 +89,10 @@ module.exports = (env, argv) => {
     },
   },
   plugins: [
+    new webpack.DefinePlugin({
+      __DEV__: JSON.stringify(!isProduction),
+      'process.env.NODE_ENV': JSON.stringify(isProduction ? 'production' : 'development'),
+    }),
     new HtmlWebpackPlugin({
       template: './public/index.html',
     }),
@@ -92,6 +101,16 @@ module.exports = (env, argv) => {
         {
           from: 'src/assets',
           to: 'src/assets',
+          noErrorOnMissing: true
+        },
+        {
+          from: 'public/manifest.json',
+          to: 'manifest.json',
+          noErrorOnMissing: true
+        },
+        {
+          from: 'public/service-worker.js',
+          to: 'service-worker.js',
           noErrorOnMissing: true
         }
       ]

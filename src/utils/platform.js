@@ -16,9 +16,31 @@ export const platformSelect = (config) => {
   return config.default || null;
 };
 
-// 플랫폼별 스타일 적용
+// Shadow 스타일을 웹용 boxShadow로 변환
+export const convertShadowToBoxShadow = (style) => {
+  if (!isWeb || !style) return style;
+  
+  const { shadowColor, shadowOffset, shadowOpacity, shadowRadius, ...otherStyles } = style;
+  
+  if (shadowColor && shadowOffset && shadowOpacity !== undefined && shadowRadius !== undefined) {
+    const { width, height } = shadowOffset;
+    const boxShadow = `${width}px ${height}px ${shadowRadius}px rgba(0, 0, 0, ${shadowOpacity})`;
+    return {
+      ...otherStyles,
+      boxShadow,
+    };
+  }
+  
+  return style;
+};
+
+// 플랫폼별 스타일 적용 (shadow 자동 변환 포함)
 export const platformStyle = (webStyle = {}, mobileStyle = {}) => {
-  return isWeb ? webStyle : mobileStyle;
+  if (isWeb) {
+    return convertShadowToBoxShadow(webStyle);
+  } else {
+    return mobileStyle;
+  }
 };
 
 // 플랫폼별 컴포넌트 로드 (동적 import 제거)

@@ -6,6 +6,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import { getAnimationService } from '../../services/AnimationService';
+import { platformStyle, isWeb } from '../../utils/platform';
 
 const AnimatedButton = ({ 
   onPress, 
@@ -25,7 +26,23 @@ const AnimatedButton = ({
     opacityAnim.setValue(0);
     scaleAnim.setValue(0.8);
     
-    animationService.fadeInScale(opacityAnim, scaleAnim, 300, 0);
+    // 웹에서는 애니메이션 서비스 대신 간단한 애니메이션 사용
+    if (isWeb) {
+      Animated.parallel([
+        Animated.timing(opacityAnim, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: false,
+        }),
+        Animated.timing(scaleAnim, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: false,
+        })
+      ]).start();
+    } else {
+      animationService.fadeInScale(opacityAnim, scaleAnim, 300, 0);
+    }
   }, []);
 
   const handlePressIn = () => {
@@ -105,11 +122,16 @@ const styles = StyleSheet.create({
     backgroundColor: '#4CAF50',
     alignItems: 'center',
     justifyContent: 'center',
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
+    ...platformStyle(
+      { boxShadow: '0px 2px 3.84px rgba(0, 0, 0, 0.25)' },
+      {
+        elevation: 3,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+      }
+    ),
   },
   buttonText: {
     color: 'white',
@@ -118,8 +140,13 @@ const styles = StyleSheet.create({
   },
   disabled: {
     backgroundColor: '#ccc',
-    elevation: 0,
-    shadowOpacity: 0,
+    ...platformStyle(
+      { boxShadow: 'none' },
+      {
+        elevation: 0,
+        shadowOpacity: 0,
+      }
+    ),
   },
   disabledText: {
     color: '#666',

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, Animated, StyleSheet } from 'react-native';
+import { platformStyle } from '../../utils/platform';
 
 const ScoreAnimation = ({ score, position, onComplete }) => {
   const animatedValue = useRef(new Animated.Value(0)).current;
@@ -68,9 +69,14 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     color: '#FFD700',
-    textShadowColor: '#000',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 3,
+    ...platformStyle(
+      { textShadow: '1px 1px 3px #000' },
+      {
+        textShadowColor: '#000',
+        textShadowOffset: { width: 1, height: 1 },
+        textShadowRadius: 3,
+      }
+    ),
   },
 });
 

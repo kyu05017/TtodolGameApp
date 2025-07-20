@@ -7,23 +7,68 @@ import {
   StyleSheet,
   Modal,
   Alert,
-  Dimensions
+  Dimensions,
+  Animated,
+  Platform
 } from 'react-native';
 import { useGame } from '../../services/GameContext';
+import { useGame as useGameWeb } from '../../services/GameContext.web';
 import { NICKNAME_WORDS } from '../../constants/nicknameWords';
+import { isWeb, platformStyle } from '../../utils/platform';
 
 const { width: screenWidth } = Dimensions.get('window');
 
 const NicknameModal = ({ visible, onClose }) => {
-  const { state, actions } = useGame();
+  // 플랫폼별 컨텍스트 사용
+  const { state, actions } = isWeb ? useGameWeb() : useGame();
   const [inputNickname, setInputNickname] = useState('');
   const [isValidNickname, setIsValidNickname] = useState(true);
   
-  // 모달이 열릴 때 현재 닉네임으로 초기화
+  // 애니메이션 상태
+  const [modalTranslateY] = useState(new Animated.Value(300)); // 모달 시작 위치 (아래쪽)
+  const [dimOpacity] = useState(new Animated.Value(0)); // 딤 시작 투명도 (투명)
+  const [isAnimationComplete, setIsAnimationComplete] = useState(false);
+  
+  // 모달이 열릴 때 현재 닉네임으로 초기화 및 애니메이션
   useEffect(() => {
     if (visible) {
       setInputNickname(state.nickname || '');
       setIsValidNickname(true);
+      setIsAnimationComplete(false);
+      
+      // 모달 올라오는 애니메이션 시작
+      Animated.sequence([
+        // 1. 모달이 올라오는 애니메이션
+        Animated.timing(modalTranslateY, {
+          toValue: 0,
+          duration: 400,
+          useNativeDriver: !isWeb,
+        }),
+        // 2. 애니메이션 완료 후 딤 적용
+        Animated.timing(dimOpacity, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: !isWeb,
+        })
+      ]).start(() => {
+        setIsAnimationComplete(true);
+      });
+    } else {
+      // 모달이 닫힐 때 초기화
+      Animated.parallel([
+        Animated.timing(modalTranslateY, {
+          toValue: 300,
+          duration: 300,
+          useNativeDriver: !isWeb,
+        }),
+        Animated.timing(dimOpacity, {
+          toValue: 0,
+          duration: 150,
+          useNativeDriver: !isWeb,
+        })
+      ]).start(() => {
+        setIsAnimationComplete(false);
+      });
     }
   }, [visible, state.nickname]);
   
@@ -114,15 +159,43 @@ const NicknameModal = ({ visible, onClose }) => {
     }
   };
   
-  return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      transparent={true}
-      onRequestClose={handleClose}
-    >
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalContent}>
+  // 웹에서는 Modal 대신 조건부 렌더링 사용
+  const renderModal = () => (
+    <>
+      {/* 딤 배경 - 애니메이션 후에 나타남 */}
+      <Animated.View 
+        style={[
+          styles.dimBackground,
+          { 
+            opacity: dimOpacity,
+            // 웹에서만 포인터 이벤트 제어
+            ...(isWeb ? { pointerEvents: isAnimationComplete ? 'auto' : 'none' } : {})
+          }
+        ]}
+      >
+        <TouchableOpacity 
+          style={styles.dimTouchable} 
+          activeOpacity={1} 
+          onPress={(e) => {
+            if (isWeb) {
+              e.preventDefault();
+              e.stopPropagation();
+            }
+            // 모든 플랫폼에서 배경 클릭 차단
+          }}
+          disabled={false} // 이벤트 캐치를 위해 활성화
+        />
+      </Animated.View>
+      
+      {/* 모달 컨텐츠 */}
+      <Animated.View 
+        style={[
+          styles.modalContent,
+          {
+            transform: [{ translateY: modalTranslateY }]
+          }
+        ]}
+      >
           {/* 모달 헤더 */}
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>닉네임 설정</Text>
@@ -211,18 +284,76 @@ const NicknameModal = ({ visible, onClose }) => {
               • 1-10자 제한
             </Text>
           </View>
-        </View>
-      </View>
-    </Modal>
+        </Animated.View>
+      </>
+  );
+
+  return (
+    <>
+      {isWeb ? (
+        // 웹에서는 조건부 렌더링
+        visible && (
+          <View style={styles.modalOverlay}>
+            {renderModal()}
+          </View>
+        )
+      ) : (
+        // 모바일에서는 Modal 컴포넌트 사용
+        <Modal
+          visible={visible}
+          animationType="none" // 커스텀 애니메이션 사용
+          transparent={true}
+          onRequestClose={handleClose}
+        >
+          <View style={styles.modalOverlay}>
+            {renderModal()}
+          </View>
+        </Modal>
+      )}
+    </>
   );
 };
 
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'transparent', // 딤 배경은 별도로 처리
     justifyContent: 'center',
     alignItems: 'center',
+    ...platformStyle(
+      {
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        width: '100vw',
+        height: '100vh',
+        zIndex: 99999,
+        display: 'flex',
+      },
+      {}
+    ),
+  },
+  dimBackground: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    ...platformStyle(
+      {
+        width: '100vw',
+        height: '100vh',
+      },
+      {}
+    ),
+  },
+  dimTouchable: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
   },
   modalContent: {
     backgroundColor: 'white',
@@ -230,11 +361,21 @@ const styles = StyleSheet.create({
     padding: 20,
     maxWidth: 400,
     width: '90%',
-    elevation: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
+    position: 'relative',
+    zIndex: 1,
+    ...platformStyle(
+      { 
+        boxShadow: '0 25px 70px rgba(0, 0, 0, 0.4)',
+        alignSelf: 'center',
+      },
+      {
+        elevation: 10,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+      }
+    ),
   },
   modalHeader: {
     flexDirection: 'row',

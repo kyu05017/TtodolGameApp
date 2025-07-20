@@ -16,6 +16,11 @@ export const getAudioPath = (audioName) => {
 
 // 웹 환경에서 사용할 오디오 URL 생성
 export const getAudioURL = (audioName) => {
+  // 현재 오디오 파일이 없으므로 기본 경로만 반환
+  if (audioName === 'background') {
+    return '/src/assets/audio/background.mp3';
+  }
+  
   const audioFile = AUDIO_FILES[audioName];
   if (!audioFile) return null;
   

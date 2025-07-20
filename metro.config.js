@@ -10,6 +10,10 @@ const config = {
   resolver: {
     // 모듈 해결 시 필요한 설정
     assetExts: ['png', 'jpg', 'jpeg', 'gif', 'mp3', 'wav', 'mp4'],
+    alias: {
+      'matter-js': require.resolve('matter-js'),
+    },
+    unstable_enablePackageExports: true,
   },
   transformer: {
     getTransformOptions: async () => ({

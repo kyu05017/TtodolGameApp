@@ -98,6 +98,11 @@ export const webStyles = {
       padding: `0 ${sizes.paddingM}px`,
     },
   },
+  
+  // React Native Web 하얀색 배경 제거 (CSS 선택자 제거)
+  transparentGameArea: {
+    backgroundColor: 'transparent !important',
+  },
 };
 
 // 웹 전용 CSS-in-JS 유틸리티
@@ -133,3 +138,49 @@ export const mediaQueries = {
   gameMedium: '@media (min-width: 401px) and (max-width: 800px)',
   gameLarge: '@media (min-width: 801px)',
 };
+
+// 전역 CSS 주입 (웹 전용) - 안전한 선택자만 사용
+if (typeof document !== 'undefined') {
+  const globalStyle = document.createElement('style');
+  globalStyle.id = 'react-native-web-transparent-fix';
+  
+  // 기존 스타일이 있다면 제거
+  const existingStyle = document.getElementById('react-native-web-transparent-fix');
+  if (existingStyle) {
+    existingStyle.remove();
+  }
+  
+  globalStyle.innerHTML = `
+    /* React Native Web 하얀색 배경 완전 제거 - 안전한 선택자 */
+    .r-backgroundColor-1niwhzg {
+      background-color: transparent !important;
+    }
+    
+    [data-focusable="true"] {
+      background-color: transparent !important;
+    }
+    
+    .css-view-1dbjc4n {
+      background-color: transparent !important;
+    }
+    
+    /* 게임 영역 내 투명화 */
+    [data-testid="game-area"] div {
+      background-color: transparent !important;
+    }
+    
+    [data-testid="game-area"] > div {
+      background-color: transparent !important;
+    }
+    
+    /* SVG 배경도 투명하게 */
+    svg rect[fill="#fefbff"] {
+      fill: transparent !important;
+    }
+    
+    svg rect[fill="#f8f9fa"] {
+      fill: transparent !important;
+    }
+  `;
+  document.head.appendChild(globalStyle);
+}

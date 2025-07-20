@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Animated, StyleSheet } from 'react-native';
 
-const MergeEffect = ({ position, size, onComplete }) => {
+const MergeEffect = ({ position, size, color, onComplete }) => {
   const scaleValue = useRef(new Animated.Value(0)).current;
   const opacityValue = useRef(new Animated.Value(1)).current;
   const rotationValue = useRef(new Animated.Value(0)).current;
@@ -45,6 +45,12 @@ const MergeEffect = ({ position, size, onComplete }) => {
     outputRange: ['0deg', '180deg'],
   });
   
+  // 색상이 제공된 경우 동적 스타일 생성
+  const effectStyle = color ? {
+    backgroundColor: `${color}B3`, // 70% 투명도 추가
+    borderColor: color,
+  } : {};
+  
   return (
     <Animated.View
       style={[
@@ -62,7 +68,7 @@ const MergeEffect = ({ position, size, onComplete }) => {
         }
       ]}
     >
-      <View style={[styles.effect, { borderRadius: size / 2 }]} />
+      <View style={[styles.effect, { borderRadius: size / 2 }, effectStyle]} />
       <View style={[styles.innerEffect, { borderRadius: size / 4 }]} />
     </Animated.View>
   );

@@ -1,5 +1,8 @@
 import { Platform } from 'react-native';
 
+// 크로스 플랫폼 개발 모드 감지 (React Native 호환)
+const isDev = typeof __DEV__ !== 'undefined' ? __DEV__ : false;
+
 export class AdService {
   constructor() {
     this.isInitialized = false;
@@ -7,7 +10,7 @@ export class AdService {
     this.bannerAdId = null;
     this.interstitialAdId = null;
     this.rewardedAdId = null;
-    this.testMode = __DEV__;
+    this.testMode = isDev;
     
     this.initializeAds();
   }
@@ -276,6 +279,83 @@ export class AdService {
       rewardedAdId: this.rewardedAdId,
       platform: Platform.OS
     };
+  }
+
+  // 배너 광고 로드
+  async loadBannerAd() {
+    if (!this.isInitialized) {
+      console.warn('광고 서비스가 초기화되지 않음');
+      return { success: false, error: '광고 서비스 미초기화' };
+    }
+
+    try {
+      if (this.isNativeAd) {
+        console.log('📱 네이티브 배너 광고 로드');
+        // 실제 네이티브 광고 로드 로직
+        return { 
+          success: true, 
+          adData: {
+            id: 'native_banner_' + Date.now(),
+            type: 'banner',
+            loaded: true
+          }
+        };
+      } else {
+        console.log('🎭 시뮬레이션 배너 광고 로드');
+        // 시뮬레이션 모드에서는 성공 반환
+        return { 
+          success: true, 
+          adData: {
+            id: 'sim_banner_' + Date.now(),
+            type: 'banner',
+            loaded: true
+          }
+        };
+      }
+    } catch (error) {
+      console.error('❌ 배너 광고 로드 실패:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // 광고 클릭 추적
+  async trackAdClick(adId) {
+    try {
+      console.log('📊 광고 클릭 추적:', adId);
+      
+      if (this.isNativeAd) {
+        // 실제 광고 클릭 추적
+        console.log('📱 네이티브 광고 클릭 추적');
+      } else {
+        // 시뮬레이션 클릭 추적
+        console.log('🎭 시뮬레이션 광고 클릭 추적');
+      }
+      
+      return { success: true };
+    } catch (error) {
+      console.error('❌ 광고 클릭 추적 실패:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // 광고 노출 추적
+  async trackAdImpression(adId) {
+    try {
+      console.log('👁️ 광고 노출 추적:', adId);
+      
+      if (this.isNativeAd) {
+        // 실제 광고 노출 추적
+        console.log('📱 네이티브 광고 노출 추적');
+      } else {
+        // 시뮬레이션 노출 추적
+        console.log('🎭 시뮬레이션 광고 노출 추적');
+      }
+      
+      return { success: true };
+    } catch (error) {
+      console.error('❌ 광고 노출 추적 실패:', error);
+      return { success: false, error: error.message };
+    }
   }
 
   // 리소스 정리

@@ -173,12 +173,14 @@ const gameReducer = (state, action) => {
       };
       
     case ActionTypes.SET_MUSIC_VOLUME:
+      console.log('🔄 GameContext Reducer - SET_MUSIC_VOLUME:', action.payload.volume);
       return {
         ...state,
         musicVolume: action.payload.volume
       };
       
     case ActionTypes.SET_EFFECT_VOLUME:
+      console.log('🔄 GameContext Reducer - SET_EFFECT_VOLUME:', action.payload.volume);
       return {
         ...state,
         effectVolume: action.payload.volume
@@ -242,6 +244,13 @@ export const GameProvider = ({ children }) => {
   // 저장된 데이터 로드
   const loadSavedData = async () => {
     try {
+      console.log('📁 저장된 데이터 로드 시작...');
+      
+      if (!AsyncStorage) {
+        console.warn('AsyncStorage를 사용할 수 없습니다.');
+        return;
+      }
+      
       const savedData = await AsyncStorage.getItem('gameData');
       if (savedData) {
         const parsedData = JSON.parse(savedData);
@@ -249,15 +258,24 @@ export const GameProvider = ({ children }) => {
           type: ActionTypes.LOAD_SAVED_DATA,
           payload: { data: parsedData }
         });
+        console.log('✅ 저장된 데이터 로드 성공');
+      } else {
+        console.log('📄 저장된 데이터가 없습니다.');
       }
     } catch (error) {
-      console.error('데이터 로드 실패:', error);
+      console.error('❌ 데이터 로드 실패:', error);
+      // 실패해도 앱은 정상적으로 동작해야 함
     }
   };
   
   // 게임 데이터 저장
   const saveGameData = async () => {
     try {
+      if (!AsyncStorage) {
+        console.warn('AsyncStorage를 사용할 수 없어 데이터 저장을 건너뜀');
+        return;
+      }
+      
       const dataToSave = {
         nickname: state.nickname,
         musicVolume: state.musicVolume,
@@ -271,8 +289,10 @@ export const GameProvider = ({ children }) => {
       };
       
       await AsyncStorage.setItem('gameData', JSON.stringify(dataToSave));
+      console.log('💾 게임 데이터 저장 완료');
     } catch (error) {
-      console.error('데이터 저장 실패:', error);
+      console.error('❌ 데이터 저장 실패:', error);
+      // 저장 실패해도 게임은 계속 진행
     }
   };
   
@@ -310,15 +330,21 @@ export const GameProvider = ({ children }) => {
       payload: { nickname }
     }),
     
-    setMusicVolume: (volume) => dispatch({
-      type: ActionTypes.SET_MUSIC_VOLUME,
-      payload: { volume }
-    }),
+    setMusicVolume: (volume) => {
+      console.log('🎵 GameContext - setMusicVolume 호출:', volume);
+      dispatch({
+        type: ActionTypes.SET_MUSIC_VOLUME,
+        payload: { volume }
+      });
+    },
     
-    setEffectVolume: (volume) => dispatch({
-      type: ActionTypes.SET_EFFECT_VOLUME,
-      payload: { volume }
-    }),
+    setEffectVolume: (volume) => {
+      console.log('🔊 GameContext - setEffectVolume 호출:', volume);
+      dispatch({
+        type: ActionTypes.SET_EFFECT_VOLUME,
+        payload: { volume }
+      });
+    },
     
     updateShakeCountdown: () => dispatch({ type: ActionTypes.UPDATE_SHAKE_COUNTDOWN }),
     
@@ -353,3 +379,6 @@ export const useGame = () => {
   }
   return context;
 };
+
+// Export the context for direct usage
+export { GameContext };

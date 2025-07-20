@@ -70,6 +70,16 @@ export const getFruitImageUri = (fruitId) => {
   const imageSource = FRUIT_IMAGES[fruitId];
   if (!imageSource) return null;
   
+  // Android에서 SVG Image를 위한 URI 처리
+  if (typeof imageSource === 'object' && imageSource.uri) {
+    return imageSource.uri;
+  }
+  
+  // React Native에서 require()로 로드된 이미지의 경우
+  if (typeof imageSource === 'number') {
+    return imageSource;
+  }
+  
   // 이미지 소스를 직접 반환 (Hermes 호환)
   return imageSource;
 };
