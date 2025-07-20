@@ -1,9 +1,12 @@
 /**
  * ===================================================================
- * AUDIO SERVICE - React Native 앱용 오디오 서비스
+ * AUDIO SERVICE - React Native용 오디오 서비스
  * ===================================================================
+ * 
+ * React Native 네이티브 환경에서 사용하는 오디오 서비스입니다.
  */
 
+import { Platform, Vibration } from 'react-native';
 import Sound from 'react-native-sound';
 
 // Sound 라이브러리 초기 설정
