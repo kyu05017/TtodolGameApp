@@ -318,45 +318,90 @@ class AudioServiceWeb {
     }
   }
 
-  // 메뉴 모달 효과 (볼륨 10% 감소 + 먹먹함 효과)
+  // 메뉴 모달 효과 (볼륨 15% 감소 + 먹먹함 효과)
   enableUnderwaterEffect() {
-    if (this.gainNode && this.audioContext && !this.isFilterActive) {
+    console.log('🎵 enableUnderwaterEffect 호출됨');
+    console.log('🔍 현재 상태:', {
+      hasGainNode: !!this.gainNode,
+      hasAudioContext: !!this.audioContext,
+      isFilterActive: this.isFilterActive,
+      hasFilterNode: !!this.filterNode,
+      currentVolume: this.musicVolume,
+      bgmPlaying: this.currentBGM && !this.currentBGM.paused
+    });
+    
+    if (!this.isFilterActive) {
       try {
-        // 볼륨을 10% 감소 (90%로 설정)
-        this.gainNode.gain.setTargetAtTime(this.musicVolume * 0.9, this.audioContext.currentTime, 0.3);
+        // 볼륨을 15% 감소 (85%로 설정)
+        const targetVolume = this.musicVolume * 0.85;
+        console.log(`🔇 볼륨 변경: ${this.musicVolume} → ${targetVolume}`);
         
-        // 로우패스 필터로 먹먹함 효과 추가
-        if (this.filterNode) {
-          this.filterNode.frequency.setTargetAtTime(1200, this.audioContext.currentTime, 0.3);
-          this.filterNode.Q.setTargetAtTime(3, this.audioContext.currentTime, 0.3);
+        // HTML Audio 요소에 직접 볼륨 적용
+        if (this.currentBGM) {
+          this.currentBGM.volume = targetVolume;
+          console.log('🔇 HTML Audio 볼륨 직접 적용됨');
+        }
+        
+        // Web Audio API 사용 가능한 경우
+        if (this.gainNode && this.audioContext) {
+          this.gainNode.gain.setTargetAtTime(targetVolume, this.audioContext.currentTime, 0.3);
+          console.log('🔇 Web Audio API 게인 노드 볼륨 적용됨');
+          
+          // 로우패스 필터로 먹먹함 효과 추가 (더 강한 효과)
+          if (this.filterNode) {
+            this.filterNode.frequency.setTargetAtTime(400, this.audioContext.currentTime, 0.2);
+            this.filterNode.Q.setTargetAtTime(10, this.audioContext.currentTime, 0.2);
+            console.log('🔇 로우패스 필터 적용됨 (400Hz, Q:10)');
+          }
         }
         
         this.isFilterActive = true;
-        console.log('🔇 메뉴 모달 효과 활성화 (볼륨 10% 감소 + 먹먹함 효과)');
+        console.log('🔇 메뉴 모달 효과 활성화 완료 (볼륨 15% 감소 + 먹먹함 효과)');
       } catch (error) {
-        console.warn('메뉴 모달 효과 활성화 실패:', error);
+        console.error('❌ 메뉴 모달 효과 활성화 실패:', error);
       }
+    } else {
+      console.log('⚠️ 필터가 이미 활성화되어 있음');
     }
   }
 
   // 메뉴 모달 효과 비활성화 (원래 볼륨으로 복원)
   disableUnderwaterEffect() {
-    if (this.gainNode && this.audioContext && this.isFilterActive) {
+    console.log('🎵 disableUnderwaterEffect 호출됨');
+    console.log('🔍 현재 상태:', {
+      isFilterActive: this.isFilterActive,
+      currentVolume: this.musicVolume
+    });
+    
+    if (this.isFilterActive) {
       try {
-        // 볼륨을 원래대로 복원 (재생 상태는 유지)
-        this.gainNode.gain.setTargetAtTime(this.musicVolume, this.audioContext.currentTime, 0.3);
+        // HTML Audio 요소에 직접 볼륨 복원
+        if (this.currentBGM) {
+          this.currentBGM.volume = this.musicVolume;
+          console.log('🔊 HTML Audio 볼륨 직접 복원됨');
+        }
         
-        // 필터를 원래 상태로 복원 (먹먹함 효과 제거)
-        if (this.filterNode) {
-          this.filterNode.frequency.setTargetAtTime(22050, this.audioContext.currentTime, 0.3);
-          this.filterNode.Q.setTargetAtTime(1, this.audioContext.currentTime, 0.3);
+        // Web Audio API 사용 가능한 경우
+        if (this.gainNode && this.audioContext) {
+          // 볼륨을 원래대로 복원 (재생 상태는 유지)
+          this.gainNode.gain.setTargetAtTime(this.musicVolume, this.audioContext.currentTime, 0.3);
+          console.log('🔊 Web Audio API 게인 노드 볼륨 복원됨');
+          
+          // 필터를 원래 상태로 복원 (먹먹함 효과 제거)
+          if (this.filterNode) {
+            this.filterNode.frequency.setTargetAtTime(22050, this.audioContext.currentTime, 0.3);
+            this.filterNode.Q.setTargetAtTime(1, this.audioContext.currentTime, 0.3);
+            console.log('🔊 로우패스 필터 해제됨');
+          }
         }
         
         this.isFilterActive = false;
-        console.log('🔊 메뉴 모달 효과 비활성화 (볼륨 복원 + 먹먹함 효과 제거)');
+        console.log('🔊 메뉴 모달 효과 비활성화 완료 (볼륨 복원 + 먹먹함 효과 제거)');
       } catch (error) {
-        console.warn('메뉴 모달 효과 비활성화 실패:', error);
+        console.error('❌ 메뉴 모달 효과 비활성화 실패:', error);
       }
+    } else {
+      console.log('⚠️ 필터가 이미 비활성화되어 있음');
     }
   }
 

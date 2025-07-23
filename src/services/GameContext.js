@@ -19,7 +19,7 @@ const initialState = {
   
   // 사용자 설정
   nickname: '',
-  musicVolume: 0.3,
+  musicVolume: 0.5,
   effectVolume: 0.5,
   
   // 특수 기능

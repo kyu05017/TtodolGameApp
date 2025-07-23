@@ -10,11 +10,9 @@ import {
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { useGame } from '../services/GameContext';
-import { useGame as useGameWeb } from '../services/GameContext.web';
 import { GAME_CONSTANTS } from '../constants/gameConstants';
 import { Platform } from 'react-native';
 import GameRenderer from '../components/Game/GameRenderer';
-import GameRendererWeb from '../components/Game/GameRenderer.web';
 import { GameScreenLayout } from '../components/Layout/ScreenLayout';
 import FixedBannerLayout from '../components/Layout/FixedBannerLayout';
 import BannerAd from '../components/Ad/BannerAd';
@@ -26,14 +24,14 @@ import FruitCollectionStatus from '../components/Game/FruitCollectionStatus';
 import MenuModal from '../components/Modal/MenuModal';
 import { getAudioService } from '../services/AudioService';
 
-// 플랫폼별 GameRenderer 선택
-const SelectedGameRenderer = isWeb ? GameRendererWeb : GameRenderer;
+// 네이티브에서는 기본 GameRenderer 사용
+const SelectedGameRenderer = GameRenderer;
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 const GameScreen = ({ navigation, gameMode = 'normal' }) => {
-  // 플랫폼별 컨텍스트 사용
-  const { state, actions } = isWeb ? useGameWeb() : useGame();
+  // 플랫폼별 컨텍스트 사용 - 네이티브에서는 기본 GameContext만 사용
+  const { state, actions } = useGame();
   const [gameTime, setGameTime] = useState(0);
   const [shakeCountdown, setShakeCountdown] = useState(30);
   const [shakeIntensity, setShakeIntensity] = useState(0);
@@ -43,6 +41,16 @@ const GameScreen = ({ navigation, gameMode = 'normal' }) => {
   
   // 오디오 서비스 인스턴스
   const audioService = getAudioService();
+  
+  // 컴포넌트 마운트 시 볼륨 설정 적용
+  useEffect(() => {
+    if (audioService) {
+      // GameContext의 볼륨값을 오디오 서비스에 적용
+      audioService.setMusicVolume(state.musicVolume);
+      audioService.setEffectVolume(state.effectVolume);
+      console.log(`🎵 게임 화면 진입 - 볼륨 설정 적용: 음악 ${Math.round(state.musicVolume * 100)}%, 효과음 ${Math.round(state.effectVolume * 100)}%`);
+    }
+  }, []);
   
   // 게임 시작 핸들러
   const handleGameStart = () => {
@@ -72,21 +80,17 @@ const GameScreen = ({ navigation, gameMode = 'normal' }) => {
   // 컴포넌트 마운트 시 및 게임 상태 변경 시 배경음악 처리
   useEffect(() => {
     if (audioService) {
-      if (state.isGameStarted && !state.isPaused) {
-        // 게임이 진행 중일 때 배경음악 재생
+      if (state.isGameStarted) {
+        // 게임이 시작되면 배경음악 재생 (일시정지 상태와 무관하게)
         audioService.playBackgroundMusic();
         console.log('🎵 게임 진행 중 - 배경음악 재생');
-      } else if (state.isPaused) {
-        // 게임이 일시정지되었을 때만 배경음악 일시정지
-        audioService.pauseBackgroundMusic();
-        console.log('🎵 게임 일시정지 - 배경음악 일시정지');
-      } else if (!state.isGameStarted) {
+      } else {
         // 게임이 종료되었을 때만 배경음악 정지
         audioService.stopBackgroundMusic();
         console.log('🎵 게임 종료 - 배경음악 정지');
       }
     }
-  }, [state.isGameStarted, state.isPaused, audioService]);
+  }, [state.isGameStarted, audioService]);
   
   // 컴포넌트 언마운트 시 배경음악 정리
   useEffect(() => {
@@ -100,15 +104,24 @@ const GameScreen = ({ navigation, gameMode = 'normal' }) => {
   
   // 메뉴 모달 상태에 따른 음악 효과 처리
   useEffect(() => {
+    console.log('🔍 메뉴 모달 상태 변경:', {
+      showMenuModal,
+      isGameStarted: state.isGameStarted,
+      hasAudioService: !!audioService,
+      audioServiceType: audioService?.constructor?.name
+    });
+    
     if (audioService && state.isGameStarted) {
       if (showMenuModal) {
-        // 메뉴 모달이 열리면 볼륨 10% 감소 + 먹먹함 효과
+        // 메뉴 모달이 열리면 볼륨 15% 감소 + 먹먹함 효과
+        console.log('🔇 메뉴 모달 효과 적용 시도...');
         audioService.enableUnderwaterEffect();
-        console.log('🔇 메뉴 모달 열림 - 볼륨 10% 감소 + 먹먹함 효과');
+        console.log('🔇 메뉴 모달 열림 - 볼륨 15% 감소 + 먹먹함 효과 적용 완료');
       } else {
         // 메뉴 모달이 닫히면 원래 볼륨으로 복원 (재생 상태 유지)
+        console.log('🔊 메뉴 모달 효과 해제 시도...');
         audioService.disableUnderwaterEffect();
-        console.log('🔊 메뉴 모달 닫힘 - 볼륨 복원 + 먹먹함 효과 제거 (재생 상태 유지)');
+        console.log('🔊 메뉴 모달 닫힘 - 볼륨 복원 + 먹먹함 효과 제거 완료');
       }
     }
   }, [showMenuModal, audioService, state.isGameStarted]);
@@ -213,6 +226,11 @@ const GameScreen = ({ navigation, gameMode = 'normal' }) => {
   
   // 게임 재시작
   const handleRestart = () => {
+    // 로우패스 필터 해제
+    if (audioService) {
+      audioService.disableUnderwaterEffect();
+      console.log('🔊 게임 재시작 - 로우패스 필터 효과 해제');
+    }
     actions.resetGame();
     setShakeCountdown(30);
     setShakeIntensity(0);
@@ -220,6 +238,11 @@ const GameScreen = ({ navigation, gameMode = 'normal' }) => {
   
   // 메인 화면으로
   const handleGoToMain = () => {
+    // 로우패스 필터 해제
+    if (audioService) {
+      audioService.disableUnderwaterEffect();
+      console.log('🔊 메인화면으로 이동 - 로우패스 필터 효과 해제');
+    }
     actions.resetGame();
     navigation.navigate('MainScreen');
   };

@@ -8,7 +8,6 @@ import {
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { useGame } from '../services/GameContext';
-import { useGame as useGameWeb } from '../services/GameContext.web';
 import { Platform } from 'react-native';
 import { NICKNAME_WORDS } from '../constants/nicknameWords';
 import { getStorageService } from '../services/StorageService';
@@ -30,8 +29,8 @@ const { width: screenWidth, height: screenHeight } = getDimensions();
 
 const MainScreen = ({ navigation }) => {
   const nav = createNavigation(navigation);
-  // 플랫폼별 컨텍스트 사용
-  const { state, actions } = isWeb ? useGameWeb() : useGame();
+  // 플랫폼별 컨텍스트 사용 - 네이티브에서는 기본 GameContext만 사용
+  const { state, actions } = useGame();
   // const [backgroundIndex, setBackgroundIndex] = useState(0); // 현재 사용하지 않음
   const [showNicknameModal, setShowNicknameModal] = useState(false);
   const [showMenuModal, setShowMenuModal] = useState(false);
@@ -72,8 +71,12 @@ const MainScreen = ({ navigation }) => {
       }
       
       const audioSettings = await storageService.getAudioSettings();
-      actions.setMusicVolume(audioSettings.musicVolume);
-      actions.setEffectVolume(audioSettings.effectVolume);
+      // 저장된 값이 있으면 사용, 없으면 기본값 (0.5) 사용
+      const musicVolume = audioSettings.musicVolume !== undefined ? audioSettings.musicVolume : 0.5;
+      const effectVolume = audioSettings.effectVolume !== undefined ? audioSettings.effectVolume : 0.5;
+      actions.setMusicVolume(musicVolume);
+      actions.setEffectVolume(effectVolume);
+      console.log(`🎵 메인화면 - 볼륨 설정 로드: 음악 ${Math.round(musicVolume * 100)}%, 효과음 ${Math.round(effectVolume * 100)}%`);
     } catch (error) {
       console.error('초기 데이터 로드 실패:', error);
     }

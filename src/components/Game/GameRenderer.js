@@ -7,6 +7,7 @@ import { GAME_CONSTANTS } from '../../constants/gameConstants';
 import { getFruitImageUri } from '../../constants/imageAssets';
 import ScoreAnimation from './ScoreAnimation';
 import MergeEffect from './MergeEffect';
+import FruitRenderer from './FruitRenderer';
 
 const GameRenderer = ({ 
   onScoreUpdate, 
@@ -23,6 +24,44 @@ const GameRenderer = ({
     previewFruit: null,
     isGameOver: false
   });
+
+  // 상태 분리: 자주 변경되는 렌더링 데이터
+  const [renderData, setRenderData] = useState({
+    fruits: [],
+    effects: [],
+    scoreAnimations: []
+  });
+
+  // 상태 분리: 덜 변경되는 게임 정보
+  const [gameInfo, setGameInfo] = useState({
+    currentFruit: null,
+    previewFruit: null,
+    isGameOver: false
+  });
+
+  // 메모이제이션으로 불필요한 계산 방지
+  const memoizedFruits = useMemo(() => {
+    return renderData.fruits.map(fruit => ({
+      id: fruit.id,
+      x: Math.round(fruit.position.x),
+      y: Math.round(fruit.position.y),
+      rotation: Math.round(fruit.angle * 180 / Math.PI),
+      fruitId: fruit.fruitId,
+      // 렌더링에 필요한 최소 데이터만 추출
+      radius: fruit.fruitData.radius
+    }));
+  }, [renderData.fruits]);
+
+  // 화면 밖 과일 컬링 (새로 추가)
+  const visibleFruits = useMemo(() => {
+    const margin = 50; // 여유 공간
+    return memoizedFruits.filter(fruit => {
+      return fruit.x > -margin && 
+            fruit.x < gameWidth + margin &&
+            fruit.y > -margin && 
+            fruit.y < gameHeight + margin;
+    });
+  }, [memoizedFruits, gameWidth, gameHeight]);
   
   const [effects, setEffects] = useState([]);
   const [scoreAnimations, setScoreAnimations] = useState([]);
@@ -134,71 +173,47 @@ const GameRenderer = ({
   }, [isPaused]);
   
   // 게임 루프
-  const startGameLoop = () => {
-    if (animationRef.current) {
-      cancelAnimationFrame(animationRef.current);
-    }
+  const startGameLoop = useCallback(() => {
+    let lastFrameTime = 0;
+    const targetFPS = 60;
+    const frameInterval = 1000 / targetFPS;
     
-    const gameLoop = () => {
-      if (!isPaused && gameEngineRef.current && gameEngineRef.current.isInitialized) {
-        const updateResult = gameEngineRef.current.update();
-        
-        if (updateResult) {
-          // 병합 이벤트 처리
-          if (updateResult.mergeResults.length > 0) {
-            let totalScore = 0;
-            updateResult.mergeResults.forEach(result => {
-              totalScore += result.score;
-              onFruitMerge(result.fruitId);
-              
-              // 합치기 이펙트 추가 (병합된 원래 과일 색상 사용)
-              const mergedFruitId = result.fruitId; // 새로 생성된 과일 ID
-              const originalFruitId = mergedFruitId - 1; // 병합된 원래 과일 ID
-              const fruitColor = FRUITS_BASE[originalFruitId]?.color; // 원래 과일 색상
-              
-              const newEffect = {
-                id: Date.now() + Math.random(),
-                position: result.position || { x: gameWidth / 2, y: gameHeight / 2 },
-                size: FRUITS_BASE[mergedFruitId].size.width,
-                color: fruitColor, // 색상 추가 (undefined일 경우 기본값 사용)
-              };
-              
-              setEffects(prev => [...prev, newEffect]);
-              
-              // 점수 애니메이션 추가
-              const newScoreAnimation = {
-                id: Date.now() + Math.random() + 1,
-                score: result.score,
-                position: result.position || { x: gameWidth / 2, y: gameHeight / 2 },
-              };
-              
-              setScoreAnimations(prev => [...prev, newScoreAnimation]);
-            });
-            onScoreUpdate(totalScore);
+    const gameLoop = (currentTime) => {
+      // 프레임 제한으로 일정한 FPS 유지
+      if (currentTime - lastFrameTime >= frameInterval) {
+        if (gameEngineRef.current && !isPaused) {
+          const updateResult = gameEngineRef.current.update();
+          if (updateResult) {
+            // 상태를 분리해서 업데이트 (리렌더링 최소화)
+            if (updateResult.fruits) {
+              setRenderData(prev => ({
+                ...prev,
+                fruits: updateResult.fruits
+              }));
+            }
+            
+            if (updateResult.currentFruit || updateResult.previewFruit) {
+              setGameInfo(prev => ({
+                ...prev,
+                currentFruit: updateResult.currentFruit,
+                previewFruit: updateResult.previewFruit
+              }));
+            }
+            
+            // 게임 오버는 별도 처리
+            if (updateResult.isGameOver !== undefined) {
+              setGameInfo(prev => ({ ...prev, isGameOver: updateResult.isGameOver }));
+            }
           }
-          
-          // 게임 오버 체크
-          if (updateResult.isGameOver && !gameState.isGameOver) {
-            setGameState(prev => ({ ...prev, isGameOver: true }));
-            onGameOver();
-            return;
-          }
-          
-          // 상태 업데이트
-          setGameState(prev => ({
-            ...prev,
-            fruits: updateResult.fruits,
-            currentFruit: gameEngineRef.current.currentFruit,
-            previewFruit: gameEngineRef.current.previewFruit
-          }));
         }
+        lastFrameTime = currentTime;
       }
       
       animationRef.current = requestAnimationFrame(gameLoop);
     };
     
-    gameLoop();
-  };
+    gameLoop(performance.now());
+  }, [isPaused]);
   
   // 쉐이크 효과
   useEffect(() => {
@@ -671,7 +686,7 @@ const GameRenderer = ({
         style={styles.gameArea}
         {...panResponder.panHandlers}
       >
-        <Svg width={gameWidth} height={gameHeight} style={styles.svg}>
+        <Svg width={gameWidth} height={gameHeight} style={styles.gameContainer}>
           {/* 배경 그라데이션 */}
           <defs>
             <radialGradient id="bgGradient" cx="50%" cy="30%" r="70%">
@@ -694,6 +709,13 @@ const GameRenderer = ({
             </filter>
           </defs>
           
+          {/* 과일 렌더링 (최적화된 컴포넌트 사용) */}
+          <FruitRenderer 
+            fruits={visibleFruits} 
+            gameWidth={gameWidth} 
+            gameHeight={gameHeight} 
+          />
+
           {/* 기본 배경 */}
           <Rect
             x={0}

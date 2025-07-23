@@ -10,7 +10,6 @@ import {
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { useGame } from '../../services/GameContext';
-import { useGame as useGameWeb } from '../../services/GameContext.web';
 import { isWeb, platformStyle } from '../../utils/platform';
 import VolumeSlider from '../UI/VolumeSlider';
 import ConfirmModal from './ConfirmModal';
@@ -27,36 +26,32 @@ const MenuModal = ({
   onRestartGame,
   onGoToMain
 }) => {
-  const { state, actions } = isWeb ? useGameWeb() : useGame();
+  const { state, actions } = useGame();
   const [showClearCacheModal, setShowClearCacheModal] = useState(false);
   const [fadeAnim] = useState(new Animated.Value(0));
   const [scaleAnim] = useState(new Animated.Value(0.8));
-  const [localMusicVolume, setLocalMusicVolume] = useState(state.musicVolume);
-  const [localEffectVolume, setLocalEffectVolume] = useState(state.effectVolume);
+  const [localMusicVolume, setLocalMusicVolume] = useState(state.musicVolume || 0.5);
+  const [localEffectVolume, setLocalEffectVolume] = useState(state.effectVolume || 0.5);
   const storageService = getStorageService();
   const audioService = getAudioService();
 
   // 볼륨 설정 불러오기
   const loadVolumeSettings = async () => {
     try {
-      const savedMusicVolume = await storageService.getItem('musicVolume');
-      const savedEffectVolume = await storageService.getItem('effectVolume');
+      const audioSettings = await storageService.getAudioSettings();
       
-      if (savedMusicVolume !== null) {
-        const musicVol = parseFloat(savedMusicVolume);
-        setLocalMusicVolume(musicVol);
-        actions.setMusicVolume(musicVol);
-        audioService.setMusicVolume(musicVol);
-        console.log('🎵 저장된 배경음악 볼륨 불러옴:', musicVol);
-      }
+      // 저장된 값이 있으면 사용, 없으면 기본값 (0.5) 사용
+      const musicVol = audioSettings.musicVolume || 0.5;
+      const effectVol = audioSettings.effectVolume || 0.5;
       
-      if (savedEffectVolume !== null) {
-        const effectVol = parseFloat(savedEffectVolume);
-        setLocalEffectVolume(effectVol);
-        actions.setEffectVolume(effectVol);
-        audioService.setEffectVolume(effectVol);
-        console.log('🔊 저장된 효과음 볼륨 불러옴:', effectVol);
-      }
+      setLocalMusicVolume(musicVol);
+      setLocalEffectVolume(effectVol);
+      actions.setMusicVolume(musicVol);
+      actions.setEffectVolume(effectVol);
+      audioService.setMusicVolume(musicVol);
+      audioService.setEffectVolume(effectVol);
+      
+      console.log('🎵 볼륨 설정 불러옴:', { musicVol, effectVol });
     } catch (error) {
       console.error('❌ 볼륨 설정 불러오기 실패:', error);
     }
@@ -65,8 +60,12 @@ const MenuModal = ({
   // 볼륨 설정 저장하기
   const saveVolumeSettings = async (musicVol, effectVol) => {
     try {
-      await storageService.setItem('musicVolume', musicVol.toString());
-      await storageService.setItem('effectVolume', effectVol.toString());
+      await storageService.saveAudioSettings({
+        musicVolume: musicVol,
+        effectVolume: effectVol,
+        isMusicEnabled: true,
+        isEffectEnabled: true
+      });
       console.log('💾 볼륨 설정 저장 완료:', { musicVol, effectVol });
     } catch (error) {
       console.error('❌ 볼륨 설정 저장 실패:', error);

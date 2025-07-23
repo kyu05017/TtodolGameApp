@@ -1,0 +1,15 @@
+{
+  "version": "1.0.0",
+  "enableBytecodeGeneration": true,
+  "optimizationLevel": "Og",
+  "compilerFlags": [
+    "-O",
+    "-emit-binary",
+    "-max-diagnostic-width=120"
+  ],
+  "runtimeFlags": [
+    "-gc-sanitize-handles=0",
+    "-gc-allocator=hades", 
+    "-gc-max-heap=512M"
+  ]
+}

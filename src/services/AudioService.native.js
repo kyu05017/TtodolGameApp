@@ -215,11 +215,11 @@ class AudioServiceNative {
     });
   }
 
-  // 메뉴 모달 효과 (볼륨 10% 감소)
+  // 메뉴 모달 효과 (볼륨 15% 감소)
   enableUnderwaterEffect() {
     if (!this.isFilterActive) {
       this.originalVolume = this.musicVolume;
-      const newVolume = this.musicVolume * 0.9; // 10% 감소 (90%로 설정)
+      const newVolume = this.musicVolume * 0.85; // 15% 감소 (85%로 설정)
       
       if (this.sounds.background) {
         this.sounds.background.setVolume(newVolume);
@@ -229,7 +229,7 @@ class AudioServiceNative {
       }
       
       this.isFilterActive = true;
-      console.log('🔇 메뉴 모달 효과 활성화 (네이티브 - 볼륨 10% 감소)');
+      console.log('🔇 메뉴 모달 효과 활성화 (네이티브 - 볼륨 15% 감소)');
     }
   }
 

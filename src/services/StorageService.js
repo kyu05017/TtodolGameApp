@@ -127,7 +127,7 @@ export class StorageService {
 
   async getAudioSettings() {
     return await this.getItem(this.storageKeys.AUDIO_SETTINGS, {
-      musicVolume: 0.3,
+      musicVolume: 0.5,
       effectVolume: 0.5,
       isMusicEnabled: true,
       isEffectEnabled: true
@@ -190,7 +190,7 @@ export class StorageService {
       },
       fruitCollection: [],
       audioSettings: {
-        musicVolume: 0.3,
+        musicVolume: 0.5,
         effectVolume: 0.5,
         isMusicEnabled: true,
         isEffectEnabled: true

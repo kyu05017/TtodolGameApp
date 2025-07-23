@@ -12,15 +12,14 @@ import {
   Platform
 } from 'react-native';
 import { useGame } from '../../services/GameContext';
-import { useGame as useGameWeb } from '../../services/GameContext.web';
 import { NICKNAME_WORDS } from '../../constants/nicknameWords';
 import { isWeb, platformStyle } from '../../utils/platform';
 
 const { width: screenWidth } = Dimensions.get('window');
 
 const NicknameModal = ({ visible, onClose }) => {
-  // 플랫폼별 컨텍스트 사용
-  const { state, actions } = isWeb ? useGameWeb() : useGame();
+  // 네이티브에서는 기본 GameContext만 사용
+  const { state, actions } = useGame();
   const [inputNickname, setInputNickname] = useState('');
   const [isValidNickname, setIsValidNickname] = useState(true);
   

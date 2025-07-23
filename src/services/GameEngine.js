@@ -134,7 +134,8 @@ export class GameEngineService {
               x: velocityX * 0.5, // 병합 시 속도를 50%로 감쇠
               y: velocityY * 0.7  // y축은 덜 감쇠
             },
-            timestamp: Date.now() // 충돌 시간 기록
+            timestamp: Date.now(), // 충돌 시간 기록
+            requiredDelay: this.calculateMergeDelay(bodyA.fruitId) // 이 줄 추가
           });
         }
       }
@@ -569,7 +570,9 @@ export class GameEngineService {
       const pendingMerges = [];
       
       for (const mergeEvent of this.pendingMerges) {
-        if (currentTime - mergeEvent.timestamp > 50) {
+        const requiredDelay = mergeEvent.requiredDelay || this.calculateMergeDelay(mergeEvent.fruitA.fruitId);
+        
+        if (currentTime - mergeEvent.timestamp > requiredDelay) {
           readyMerges.push(mergeEvent);
         } else {
           pendingMerges.push(mergeEvent);
@@ -609,6 +612,12 @@ export class GameEngineService {
     }
   }
 
+  // 새 메서드 추가 (클래스 마지막에 추가)
+  calculateMergeDelay(fruitId) {
+    // 작은 과일: 빠른 병합 (100ms)
+    // 큰 과일: 느린 병합 (최대 200ms)
+    return Math.min(200, 100 + (fruitId * 15));
+  }
   reset() {
     // 모든 과일 제거
     this.fruits.forEach(fruit => {
@@ -626,21 +635,29 @@ export class GameEngineService {
 
   // 속도 제한 함수 (버그 수정: 과일이 미친듯이 굴러가는 현상 방지)
   limitVelocities() {
-    const MAX_VELOCITY = GAME_CONSTANTS.VELOCITY_LIMITS.MAX_VELOCITY;
-    const MAX_ANGULAR_VELOCITY = GAME_CONSTANTS.VELOCITY_LIMITS.MAX_ANGULAR_VELOCITY;
     
     this.fruits.forEach(fruit => {
-      // 수평 속도를 더 강하게 제한 (수직 속도보다)
-      const MAX_HORIZONTAL_VELOCITY = MAX_VELOCITY * 0.25; // 수평 속도는 25%로 강력 제한 (3px/frame)
       
-      // 수평 속도 제한
+      const MAX_VELOCITY = GAME_CONSTANTS.VELOCITY_LIMITS.MAX_VELOCITY;
+      const MAX_ANGULAR_VELOCITY = GAME_CONSTANTS.VELOCITY_LIMITS.MAX_ANGULAR_VELOCITY;
+
+      // 1. 과일 크기별 차등 속도 제한
+      const fruitSize = fruit.fruitData.radius || fruit.fruitData.size.width / 2;
+      const sizeMultiplier = Math.min(1.2, fruitSize / 20); // 큰 과일일수록 느리게
+
+      // 2. 단계별 속도 감소 (급격한 변화 방지)
+      const MAX_HORIZONTAL_VELOCITY = MAX_VELOCITY * (0.4 + sizeMultiplier * 0.1); // 40-50%
+
+      // 3. 부드러운 속도 감쇠 (급격한 변화 방지)
       if (Math.abs(fruit.velocity.x) > MAX_HORIZONTAL_VELOCITY) {
+        const targetVelocity = Math.sign(fruit.velocity.x) * MAX_HORIZONTAL_VELOCITY;
+        const dampedVelocity = fruit.velocity.x * 0.8 + targetVelocity * 0.2; // 선형 보간
+        
         Matter.Body.setVelocity(fruit, {
-          x: Math.sign(fruit.velocity.x) * MAX_HORIZONTAL_VELOCITY,
+          x: dampedVelocity,
           y: fruit.velocity.y
         });
       }
-      
       // 전체 속도 제한
       const speed = Math.sqrt(fruit.velocity.x * fruit.velocity.x + fruit.velocity.y * fruit.velocity.y);
       if (speed > MAX_VELOCITY) {
@@ -658,28 +675,40 @@ export class GameEngineService {
         Matter.Body.setAngularVelocity(fruit, limitedAngularVelocity);
       }
       
-      // 거의 정지 상태인 과일의 미세한 움직임 제거
-      // 단, 수직 방향으로는 최소 낙하 속도 보장
-      if (Math.abs(fruit.velocity.x) < 0.5) {
+      // 3. 부드러운 속도 감쇠
+      if (Math.abs(fruit.velocity.x) > MAX_HORIZONTAL_VELOCITY) {
+        const targetVelocity = Math.sign(fruit.velocity.x) * MAX_HORIZONTAL_VELOCITY;
+        const dampedVelocity = fruit.velocity.x * 0.8 + targetVelocity * 0.2; // 선형 보간
+        
         Matter.Body.setVelocity(fruit, {
-          x: fruit.velocity.x * 0.8, // x축 미세한 움직임 감쇠
+          x: dampedVelocity,
           y: fruit.velocity.y
         });
       }
       
-      // 벽 근처에서 강제 속도 감소 (x=114 근처 문제 해결)
+      // 4. 벽 근처에서 점진적 속도 감소 (70% → 20% 감소)
       const wallThickness = GAME_CONSTANTS.WORLD.WALL_THICKNESS;
-      const fruitRadius = fruit.fruitData.radius || fruit.fruitData.size.width / 2;
+      const fruitRadius = this.previewFruit.fruitData.size.width / 2;
+      const wallProximity = Math.min(
+        fruit.position.x - (wallThickness + fruitRadius),
+        (this.gameWidth - wallThickness - fruitRadius) - fruit.position.x
+      );
       
-      if (fruit.position.x < wallThickness + fruitRadius + 20 || 
-          fruit.position.x > this.gameWidth - wallThickness - fruitRadius - 20) {
-        // 벽 근처에서 수평 속도 강제 감소
+      if (wallProximity < 30) { // 벽에서 30px 이내
+        const dampingFactor = 0.8 + (wallProximity / 30) * 0.2; // 0.8~1.0
         Matter.Body.setVelocity(fruit, {
-          x: fruit.velocity.x * 0.3, // 벽 근처에서 수평 속도 70% 감소
+          x: fruit.velocity.x * dampingFactor,
           y: fruit.velocity.y
         });
       }
       
+      // 5. 각속도 제한 (50% → 30% 제한)
+      const MAX_ANGULAR_REDUCED = MAX_ANGULAR_VELOCITY * 0.3;
+      if (Math.abs(fruit.angularVelocity) > MAX_ANGULAR_REDUCED) {
+        const limitedAngularVelocity = Math.sign(fruit.angularVelocity) * MAX_ANGULAR_REDUCED;
+        Matter.Body.setAngularVelocity(fruit, limitedAngularVelocity);
+      }
+
       // 과일이 공중에서 멈추는 것 방지 (y 위치가 바닥에서 멀 때)
       const bottomY = this.gameHeight - wallThickness - fruitRadius;
       if (fruit.position.y < bottomY - 10 && Math.abs(fruit.velocity.y) < 0.5) {
