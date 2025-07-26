@@ -1,0 +1,63 @@
+{
+  "expo": {
+    "name": "Ttodol Game",
+    "slug": "ttodol-game",
+    "version": "1.0.0",
+    "orientation": "landscape",
+    "icon": "./src/assets/images/fruits/00_cherry.png",
+    "userInterfaceStyle": "light",
+    "runtimeVersion": "1.0.0",
+    "platforms": ["ios", "android", "web"],
+    "newArchEnabled": false,
+    "jsEngine": "jsc",
+    "splash": {
+      "image": "./src/assets/images/fruits/10_watermelon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FFE5B4"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.ttodolgame.app",
+      "requireFullScreen": true,
+      "infoPlist": {
+        "UIRequiredDeviceCapabilities": ["armv7"],
+        "UIRequiresFullScreen": true,
+        "UIStatusBarHidden": true,
+        "UIViewControllerBasedStatusBarAppearance": false
+      },
+      "buildNumber": "1"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./src/assets/images/fruits/00_cherry.png",
+        "backgroundColor": "#FFE5B4"
+      },
+      "package": "com.ttodolgameapp",
+      "versionCode": 1,
+      "permissions": [
+        "VIBRATE"
+      ]
+    },
+    "web": {
+      "favicon": "./src/assets/images/fruits/00_cherry.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-screen-orientation",
+      [
+        "expo-av",
+        {
+          "microphonePermission": false
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "test-ttodol-game-project"
+      }
+    }
+  }
+}
