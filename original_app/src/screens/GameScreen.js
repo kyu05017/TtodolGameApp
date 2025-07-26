@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 // import { LinearGradient } from 'expo-linear-gradient'; // Temporarily disabled
 import { useGame } from '../services/GameContext';
-import { GAME_CONSTANTS } from '../constants/gameConstants';
+import { GAME_CONSTANTS } from '../constants/gameConstants.ts';
 import { Platform } from 'react-native';
 import GameRenderer from '../components/Game/GameRenderer';
 import { GameScreenLayout } from '../components/Layout/ScreenLayout';

@@ -3,7 +3,7 @@ import { View, StyleSheet, Dimensions } from 'react-native';
 import Svg, { Circle, Rect, Line, Image } from 'react-native-svg';
 import { GameEngineService } from '../../services/GameEngine';
 import { FRUITS_BASE } from '../../constants/fruits';
-import { GAME_CONSTANTS } from '../../constants/gameConstants';
+import { GAME_CONSTANTS } from '../../constants/gameConstants.ts';
 import { getFruitImageUri } from '../../constants/imageAssets';
 import { isWeb } from '../../utils/platform';
 import ScoreAnimation from './ScoreAnimation';

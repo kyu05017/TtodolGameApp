@@ -22,7 +22,7 @@ import Svg, {
 } from 'react-native-svg';
 import { GameEngineService } from '../../services/GameEngine';
 import { FRUITS_BASE } from '../../constants/fruits';
-import { GAME_CONSTANTS } from '../../constants/gameConstants';
+import { GAME_CONSTANTS } from '../../constants/gameConstants.ts';
 import { getFruitImageUri } from '../../constants/imageAssets';
 import ScoreAnimation from './ScoreAnimation';
 import MergeEffect from './MergeEffect';

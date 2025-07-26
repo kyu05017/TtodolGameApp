@@ -1,5 +1,5 @@
 import Matter from 'matter-js';
-import { GAME_CONSTANTS } from '../constants/gameConstants';
+import { GAME_CONSTANTS } from '../constants/gameConstants.ts';
 import { FRUITS_BASE } from '../constants/fruits';
 
 class GameEngineService {

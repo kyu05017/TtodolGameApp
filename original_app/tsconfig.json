@@ -28,7 +28,7 @@
     "**/*.tsx",
     "**/*.js",
     "**/*.jsx"
-  ],
+, "src/constants/gameConstants.ts"  ],
   "exclude": [
     "original_app/node_modules",
     "original_app/__tests__"
